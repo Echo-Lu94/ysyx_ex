@@ -1,5 +1,5 @@
 STUID = ysyx_22040000
-STUNAME = Echo
+STUNAME = NPC
 
 # DO NOT modify the following code!!!
 
