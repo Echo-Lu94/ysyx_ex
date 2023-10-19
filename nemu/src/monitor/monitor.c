@@ -32,8 +32,8 @@ static void welcome() {
   Log("Build time: %s, %s", __TIME__, __DATE__);
   printf("Welcome to %s-NEMU!\n", ANSI_FMT(str(__GUEST_ISA__), ANSI_FG_YELLOW ANSI_BG_RED));
   printf("For help, type \"help\"\n");
-  Log("Exercise: Please remove me in the source code and compile NEMU again.");
-  assert(0);
+//  Log("Exercise: Please remove me in the source code and compile NEMU again.");
+//  assert(0);
 }
 
 #ifndef CONFIG_TARGET_AM
@@ -129,6 +129,7 @@ void init_monitor(int argc, char *argv[]) {
   init_sdb();
 
 #ifndef CONFIG_ISA_loongarch32r
+//MUXDEF(CONFIG_TRACE, "ON", "OFF")则表示, 如果定义了CONFIG_TRACE, 则预处理结果为"ON"("OFF"在预处理后会消失), 否则预处理结果为"OFF".
   IFDEF(CONFIG_ITRACE, init_disasm(
     MUXDEF(CONFIG_ISA_x86,     "i686",
     MUXDEF(CONFIG_ISA_mips32,  "mipsel",
