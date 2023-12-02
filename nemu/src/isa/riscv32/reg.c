@@ -23,9 +23,25 @@ const char *regs[] = {
   "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"
 };
 
+// changed by halo for PA1_4.3
 void isa_reg_display() {
+    int i;
+    int regs_num = (sizeof(regs)) / (sizeof(char *));
+
+    for(i=0; i<regs_num; i++){
+        printf("%s      %p      %d\n", regs[i], &regs[i], *regs[i]);
+    }
 }
 
 word_t isa_reg_str2val(const char *s, bool *success) {
+   int regs_num = (sizeof(regs))/(sizeof(char *));
+   int i;
+   for(i=0;i<regs_num;i++){
+       if(strcmp(s, regs[i]) == 0) {
+           *success = true;
+           return *regs[i];
+       }
+   }
+
   return 0;
 }

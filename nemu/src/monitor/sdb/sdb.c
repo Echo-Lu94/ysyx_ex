@@ -18,15 +18,19 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "sdb.h"
+#include <memory/paddr.h>
 
 static int is_batch_mode = false;
 
 void init_regex();
 void init_wp_pool();
+//bool make_token(char *e);
+word_t expr(char *e, bool *success);
+
 
 /* We use the `readline' library to provide more flexibility to read from stdin. */
 static char* rl_gets() {
-  static char *line_read = NULL;
+    static char *line_read = NULL;
 
   if (line_read) {
     free(line_read);
@@ -34,8 +38,8 @@ static char* rl_gets() {
   }
 
   line_read = readline("(nemu) ");
-
   if (line_read && *line_read) {
+//      printf("%s-%d\n",line_read, *line_read);
     add_history(line_read);
   }
 
@@ -47,6 +51,104 @@ static int cmd_c(char *args) {
   return 0;
 }
 
+////////////////// added by halo for PA1
+static int cmd_si(char *args ){
+    char *arg = strtok(NULL, " ");
+//    extern void execute(uint64_t n);
+    if(arg == NULL){
+//        execute(1);
+        cpu_exec(1);
+    }
+    else{
+        cpu_exec(atoi(arg));
+//        execute(atoi(arg));
+    }    
+    return 0;
+}
+
+static int cmd_info(char *args){
+    char *arg = strtok(NULL, " ");
+    if(strcmp(arg , "r") == 0){
+        isa_reg_display();
+    }
+    return 0;
+}
+
+static int cmd_x(char *args){
+    char *arg = strtok(NULL, " ");
+    int x_num = (atoi(arg));
+    arg = strtok(NULL, "\0");//paddr    
+
+//strtoul将参数str指向的字符串根据给定base转换为无符号长整数
+    paddr_t paddr = (uint32_t)strtoul(arg,NULL,16);
+//    printf("x_num=%d,addr=%u, addr = %s\n", x_num,paddr,arg);
+    word_t read_val;
+    int i;
+    for(i=0;i<x_num;i++){
+    //case 4: return *(uint32_t *)addr;
+        read_val = paddr_read(paddr, 4);
+        printf("%#.8x:     %#.8x\n",paddr, read_val);//%#. 以0x的格式输出十六进制数据
+        paddr+=4;
+    }
+    return 0;
+}
+
+
+ word_t cmdp_num=0;
+ word_t cmdp_val[32];
+static int cmd_p(char *args){
+//static int cmd_p(){////////for test
+//    char *context;
+//
+//    char *arg = strtok_r(args, " ", &context);
+//    printf("the arg is %s, context is %s\n",arg, context);
+    
+  bool *success = false;
+//  word_t result;
+
+//    cmdp_val[cmdp_num] = expr(args,success);
+//    result = expr(args,success);
+//    printf("result = %d\n",*success);
+//    assert(*success ==true);
+    cmdp_num++;
+cmdp_val[cmdp_num] = expr(args,success);
+/////////////////////////////////////// for test
+//    uint32_t gen_result;
+//    char args[65536];
+////popen执行shell指令，参数1指令，参数2只能是r或w; fopen参数1文件路径，参数2打开模式
+//    FILE *fp=popen("~/ysyx_workspace/ysyx-workbench/nemu/tools/gen-expr/tmp/.expr","r");
+//    assert(fp != NULL);
+//    int ret=fscanf(fp, "%d", &gen_result);
+//    assert(ret!=0);
+//   printf("gen_result = %d\n",gen_result);
+//    pclose(fp);
+//
+//    ret = system("cp ~/ysyx_workspace/ysyx-workbench/nemu/tools/gen-expr/input ./");
+//    assert(ret == 0);
+////    fp=fopen("~/ysyx_workspace/ysyx-workbench/nemu/tools/gen-expr/input","r");
+//    fp=fopen("input","r");
+//    assert(fp!=NULL);
+////    ret=fscanf(fp, "%s", args);
+////  printf("the args is %s\n", args);
+//    
+//    if(fgets(args, 65536, fp) != NULL) {
+//        printf("%s\n", args);
+//    }
+//
+//    fclose(fp);
+//
+//    result = expr(args,success);
+//
+//    if(result != gen_result){
+//    Log( "result=%d, but gen_result=%d",result,gen_result);
+//    }else
+//    {
+//        Log("expr success!");
+//    }
+    printf("$%d = %d\n", cmdp_num, cmdp_val[cmdp_num]);
+  
+    return 0;
+}
 
 static int cmd_q(char *args) {
   return -1;
@@ -62,8 +164,12 @@ static struct {
   { "help", "Display information about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
+  { "si", "Single Step", cmd_si },
+  { "info", "Print the information of registers", cmd_info},
+  { "x", "Scan the memory", cmd_x},
+  { "p", "Expression Evaluation", cmd_p},
 
-  /* TODO: Add more commands */
+
 
 };
 
@@ -74,7 +180,7 @@ static int cmd_help(char *args) {
   char *arg = strtok(NULL, " ");
   int i;
 
-  if (arg == NULL) {
+  if (arg == NULL) {//help后未指定命令,则打印所有命令
     /* no argument given */
     for (i = 0; i < NR_CMD; i ++) {
       printf("%s - %s\n", cmd_table[i].name, cmd_table[i].description);
@@ -82,7 +188,7 @@ static int cmd_help(char *args) {
   }
   else {
     for (i = 0; i < NR_CMD; i ++) {
-      if (strcmp(arg, cmd_table[i].name) == 0) {
+      if (strcmp(arg, cmd_table[i].name) == 0) {//help xxx,匹配到命令，打印该命令
         printf("%s - %s\n", cmd_table[i].name, cmd_table[i].description);
         return 0;
       }

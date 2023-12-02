@@ -78,6 +78,10 @@ static int parse_args(int argc, char *argv[]) {
     {0          , 0                , NULL,  0 },
   };
   int o;
+  //-x后面要跟参数，加:，不加参数无需:，可加可不加::
+  //字母对应table最后一个参数
+  //每次调用getopt_long，解析一个符号，返回相应短选项字符。解析完毕返回-1
+  //全局变量optarg指向下一个要处理的变量,当处理完所有选项后，全局变量optind指向第一个未知的选项索引
   while ( (o = getopt_long(argc, argv, "-bhl:d:p:", table, NULL)) != -1) {
     switch (o) {
       case 'b': sdb_set_batch_mode(); break;
