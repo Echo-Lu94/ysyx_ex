@@ -23,7 +23,13 @@
 static int is_batch_mode = false;
 
 void init_regex();
+/////////////// watchpoint ////////////////
 void init_wp_pool();
+void info_wp();
+void delete_wp(int NUM);
+void set_wp(char *args);
+void diff_wp();
+
 //bool make_token(char *e);
 word_t expr(char *e, bool *success);
 
@@ -71,6 +77,9 @@ static int cmd_info(char *args){
     if(strcmp(arg , "r") == 0){
         isa_reg_display();
     }
+    else if(strcmp(arg, "w") == 0){
+        info_wp();
+    }
     return 0;
 }
 
@@ -94,8 +103,6 @@ static int cmd_x(char *args){
 }
 
 
- word_t cmdp_num=0;
- word_t cmdp_val[32];
 static int cmd_p(char *args){
 //static int cmd_p(){////////for test
 //    char *context;
@@ -110,6 +117,8 @@ static int cmd_p(char *args){
 //    result = expr(args,success);
 //    printf("result = %d\n",*success);
 //    assert(*success ==true);
+ word_t cmdp_num=0;
+ word_t cmdp_val[32];
     cmdp_num++;
 cmdp_val[cmdp_num] = expr(args,success);
 /////////////////////////////////////// for test
@@ -150,6 +159,21 @@ cmdp_val[cmdp_num] = expr(args,success);
     return 0;
 }
 
+static int cmd_w(char *args){
+    char *arg = strtok(NULL, " ");
+//    int32_t res = expr(
+//printf("cmd_w arg is %s\n",arg);
+    set_wp(arg);
+    return 0;
+}
+
+static int cmd_d(char *args){
+    Assert(args != NULL, "No segment to delete");
+    char *arg = strtok(NULL, " ");
+    delete_wp(atoi(arg));
+    return 0;
+}
+
 static int cmd_q(char *args) {
   return -1;
 }
@@ -164,12 +188,12 @@ static struct {
   { "help", "Display information about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
-  { "si", "Single Step", cmd_si },
-  { "info", "Print the information of registers", cmd_info},
+  { "si", "Single step", cmd_si },
+  { "info", "Print the information of r: registers/w: watchpoints", cmd_info},
   { "x", "Scan the memory", cmd_x},
-  { "p", "Expression Evaluation", cmd_p},
-
-
+  { "p", "Expression evaluation", cmd_p},
+  { "w", "Set a watchpoint", cmd_w},
+  { "d", "Delete a watchpoint", cmd_d},
 
 };
 

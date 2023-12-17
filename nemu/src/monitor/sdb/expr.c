@@ -148,7 +148,8 @@ static bool make_token(char *e) {
                         memset(tokens[nr_token].str, 0, sizeof(tokens[nr_token].str)); 
                         tokens[nr_token].type = rules[i].token_type;
                         strncpy(tokens[nr_token].str , substr_start,substr_len) ;
-            default : tokens[nr_token].type =  rules[i].token_type;
+            default : memset(tokens[nr_token].str, 0, sizeof(tokens[nr_token].str));
+                      tokens[nr_token].type =  rules[i].token_type;
                       strncpy(tokens[nr_token].str , substr_start,substr_len) ;
                       Log("tokens[%d].type = %d", nr_token,tokens[nr_token].type);
                       Log("tokens[%d].str = %s\n", nr_token,tokens[nr_token].str);
@@ -346,7 +347,7 @@ word_t expr(char *e, bool *success) {
 //  }
 
   
-  /* TODO: Insert codes to evaluate the expression. */
+  /* Insert codes to evaluate the expression. */
 //  *success = true;
   return eval(0, nr_token-1);
 //  return 0;
