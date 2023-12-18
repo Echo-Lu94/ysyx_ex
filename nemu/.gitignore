@@ -1,5 +1,3 @@
-*.*
-*
 !*/
 !Makefile
 !*.mk
@@ -10,3 +8,6 @@
 !Kconfig
 include/config
 include/generated
+!*.o
+!build/*
+!scripts/*
