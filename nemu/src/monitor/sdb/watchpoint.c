@@ -22,6 +22,7 @@ typedef struct watchpoint {
   struct watchpoint *next;
 
   /* Add more members if necessary */
+  //x char* expr;
   char expr[512];//expression of wp
   int value;//last value of wp
 
