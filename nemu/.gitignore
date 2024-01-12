@@ -8,6 +8,9 @@
 !Kconfig
 include/config
 include/generated
-!*.o
-!build/*
+*.o
+build/*
 !scripts/*
+input
+LICENSE
+
