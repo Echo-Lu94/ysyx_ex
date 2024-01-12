@@ -57,33 +57,47 @@ diff_wp();
 //} Decode;
 
 static void exec_once(Decode *s, vaddr_t pc) {
+
   s->pc = pc;
   s->snpc = pc;//static next pc
-//  printf("!!!!!!!!!!!!!!snpc pc is %08x\n", pc);
   isa_exec_once(s);
+ Log("cpu.pc: %08x",pc);
+ Log("dnpc: %08x", s->dnpc);
+
   cpu.pc = s->dnpc;
-  printf("!!!!!!!!!!!!!!pc pc is %08x\n", cpu.pc);
+
 #ifdef CONFIG_ITRACE
   char *p = s->logbuf;
+//pc地址保存在p中
   p += snprintf(p, sizeof(s->logbuf), FMT_WORD ":", s->pc);
-  int ilen = s->snpc - s->pc;
+//  snprintf(p, sizeof(s->logbuf), FMT_WORD ":", s->pc);
+//  Log("p2: %s", p);
+//  int ilen = s->snpc - s->pc;
+  int ilen = s->dnpc - s->pc;
+//  Log("ilen: %d",ilen);
   int i;
   uint8_t *inst = (uint8_t *)&s->isa.inst.val;
+  //实际指令保存到p中
   for (i = ilen - 1; i >= 0; i --) {
     p += snprintf(p, 4, " %02x", inst[i]);
+//    snprintf(p, 4, " %02x", inst[i]);
+//    Log("p3: %s", p);
   }
   int ilen_max = MUXDEF(CONFIG_ISA_x86, 8, 4);
   int space_len = ilen_max - ilen;
+//  Log("space len: %d",space_len);
   if (space_len < 0) space_len = 0;
   space_len = space_len * 3 + 1;
   memset(p, ' ', space_len);
+  //反汇编指令保存到p中
   p += space_len;
 
 #ifndef CONFIG_ISA_loongarch32r
+//当前反汇编指令
   void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
-  printf("logbuf is %s, size of logbuf is %ld, p is %s\n", s->logbuf , sizeof(s->logbuf) , p);
   disassemble(p, s->logbuf + sizeof(s->logbuf) - p,
       MUXDEF(CONFIG_ISA_x86, s->snpc, s->pc), (uint8_t *)&s->isa.inst.val, ilen);
+  printf("inst: %s\n",s->logbuf);
 #else
   p[0] = '\0'; // the upstream llvm does not support loongarch32r
 #endif
@@ -92,6 +106,7 @@ static void exec_once(Decode *s, vaddr_t pc) {
 
 static void execute(uint64_t n) {
   Decode s;
+//  s.pc = cpu.pc;
   for (;n > 0; n --) {
     exec_once(&s, cpu.pc);
     //记录客户指令的计数器
@@ -133,6 +148,11 @@ void cpu_exec(uint64_t n) {
   uint64_t timer_end = get_time();
   g_timer += timer_end - timer_start;
 
+//enum { NEMU_RUNNING, NEMU_STOP, NEMU_END, NEMU_ABORT, NEMU_QUIT };
+    Log("nemu state : %d\n", nemu_state.state);
+
+//void set_nemu_state(int state, vaddr_t pc, int halt_ret);
+//#define NEMUTRAP(thispc, code) set_nemu_state(NEMU_END, thispc, code)
   switch (nemu_state.state) {
     case NEMU_RUNNING: nemu_state.state = NEMU_STOP; break;
 

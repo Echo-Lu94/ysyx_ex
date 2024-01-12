@@ -29,17 +29,19 @@ void isa_reg_display() {
     int regs_num = (sizeof(regs)) / (sizeof(char *));
 
     for(i=0; i<regs_num; i++){
-        printf("%s      %p      %d\n", regs[i], &regs[i], *regs[i]);
+//        printf("%s      %p      %d\n", regs[i], &regs[i], *regs[i]);
+        printf("%*d:   %-*s       0x%08x\n",2,i, 3, regs[i],  cpu.gpr[i]);
     }
 }
 
-word_t isa_reg_str2val(const char *s, bool *success) {
+sword_t isa_reg_str2val(const char *s, bool *success) {
    int regs_num = (sizeof(regs))/(sizeof(char *));
    int i;
    for(i=0;i<regs_num;i++){
        if(strcmp(s, regs[i]) == 0) {
            *success = true;
-           return *regs[i];
+//           return *regs[i];
+            return cpu.gpr[i];
        }
    }
 

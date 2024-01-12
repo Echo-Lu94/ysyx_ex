@@ -128,8 +128,8 @@ static bool make_token(char *e) {
 //%*s :打印字符串，至少substr_len个字节，不够左侧补0，超过则按实际长度
 //%.*s:最多substr_len个字节，不够按实际长度，超过只打印substr_len个
 //%-*s:原本左侧对齐改为右侧对齐
-        Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s",
-            i, rules[i].regex, position, substr_len, substr_len, substr_start);
+//        Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s",
+//            i, rules[i].regex, position, substr_len, substr_len, substr_start);
 
         position += substr_len;
 
@@ -151,8 +151,8 @@ static bool make_token(char *e) {
             default : memset(tokens[nr_token].str, 0, sizeof(tokens[nr_token].str));
                       tokens[nr_token].type =  rules[i].token_type;
                       strncpy(tokens[nr_token].str , substr_start,substr_len) ;
-                      Log("tokens[%d].type = %d", nr_token,tokens[nr_token].type);
-                      Log("tokens[%d].str = %s\n", nr_token,tokens[nr_token].str);
+//                      Log("tokens[%d].type = %d", nr_token,tokens[nr_token].type);
+//                      Log("tokens[%d].str = %s\n", nr_token,tokens[nr_token].str);
                       nr_token++;
                       // considering limitation of tokens[32]
                       Assert(nr_token<32,"nr_token should less than 32 !");
@@ -261,7 +261,7 @@ static uint32_t eval(int p, int q){
      * Return the value of the number.
      */
 
-      word_t ret;
+      sword_t ret;
       if(tokens[p].type == TK_HEX){
         sscanf(tokens[p].str, "%X", &ret);
         printf("TK_HEX is %#x\n",ret);

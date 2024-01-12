@@ -86,7 +86,7 @@ void info_wp(){
         while(wp){
 //            int len = strlen(wp->expr);
 //            printf("strlen is %d\n",len);
-            printf("%-8d%-15s%-8d\n", wp->NO, wp->expr,wp->value);
+            printf("%-8d%-15s0x%-8x\n", wp->NO, wp->expr,wp->value);
             wp = wp->next;
     }
 }
@@ -113,9 +113,9 @@ void set_wp(char *args){
     bool success = true;
     word_t res = expr(wp->expr,&success);
 //TODO:tmp assert
-    assert(success);
+//    assert(success);
     wp->value = res;
-//    printf("wp->value is %d\n", wp->value);
+    printf("wp->value is 0x%08x\n", wp->value);
     printf("Watchpoint %d: %s\n", wp->NO, wp-> expr);
 }
 
@@ -126,9 +126,9 @@ void diff_wp(){
         word_t res = expr(wp->expr, success);
         if(wp->value != res){
             printf("Watchpoint %d: %s\n"
-            "Old value = %d\n"
-            "New value = %d\n",
-            wp->NO, wp->expr, wp->value, res);
+            "Old value = %d = 0x%08x\n"
+            "New value = %d = 0x%08x\n",
+            wp->NO, wp->expr, wp->value, wp->value, res, res);
             wp->value = res;
             nemu_state.state = NEMU_STOP;
         }

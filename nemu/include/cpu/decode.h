@@ -88,6 +88,26 @@ finish:
 
 
 // --- pattern matching wrappers for decode ---
+
+//eg.
+//INSTPAT_START
+//{ const void ** __instpat_end = &&__instpat_end_;
+//INSTPAT
+//do {
+//  uint64_t key, mask, shift;
+//  pattern_decode("??????? ????? ????? ??? ????? 00101 11", 38, &key, &mask, &shift);
+//  if ((((uint64_t)s->isa.inst.val >> shift) & mask) == key) {
+//    {
+//      decode_operand(s, &rd, &src1, &src2, &imm, TYPE_U);
+//      R(rd) = s->pc + imm;
+//    }
+//    goto *(__instpat_end);
+//  }
+//} while (0);
+//INSTPAT_END
+//__instpat_end_: ; }
+
+
 #define INSTPAT(pattern, ...) do { \
   uint64_t key, mask, shift; \
   pattern_decode(pattern, STRLEN(pattern), &key, &mask, &shift); \

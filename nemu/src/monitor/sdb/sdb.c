@@ -154,7 +154,7 @@ cmdp_val[cmdp_num] = expr(args,success);
 //    {
 //        Log("expr success!");
 //    }
-    printf("$%d = %d\n", cmdp_num, cmdp_val[cmdp_num]);
+    printf("$%d = %d = %#x\n", cmdp_num, cmdp_val[cmdp_num], cmdp_val[cmdp_num]);
   
     return 0;
 }
