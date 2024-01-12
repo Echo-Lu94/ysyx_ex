@@ -110,7 +110,7 @@ void set_wp(char *args){
 //    head=wp;
 //    printf("wp->expr in set_wp is %s\n",wp->expr);
 //    printf("head->expr in set_wp is %s, NO is %d\n",head->expr,head->NO);
-    bool success;
+    bool success = true;
     word_t res = expr(wp->expr,&success);
 //TODO:tmp assert
     assert(success);

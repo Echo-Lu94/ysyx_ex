@@ -28,6 +28,7 @@ typedef struct Decode {
 
 // --- pattern matching mechanism ---
 __attribute__((always_inline))
+// 用于将模式字符串转换成3个整型变量
 static inline void pattern_decode(const char *str, int len,
     uint64_t *key, uint64_t *mask, uint64_t *shift) {
   uint64_t __key = 0, __mask = 0, __shift = 0;

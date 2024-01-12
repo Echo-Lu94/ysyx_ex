@@ -48,11 +48,21 @@ diff_wp();
 #endif
 }
 
+//typedef struct Decode {
+//  vaddr_t pc;
+//  vaddr_t snpc; // static next pc
+//  vaddr_t dnpc; // dynamic next pc
+//  ISADecodeInfo isa;
+//  IFDEF(CONFIG_ITRACE, char logbuf[128]);
+//} Decode;
+
 static void exec_once(Decode *s, vaddr_t pc) {
   s->pc = pc;
-  s->snpc = pc;
+  s->snpc = pc;//static next pc
+//  printf("!!!!!!!!!!!!!!snpc pc is %08x\n", pc);
   isa_exec_once(s);
   cpu.pc = s->dnpc;
+  printf("!!!!!!!!!!!!!!pc pc is %08x\n", cpu.pc);
 #ifdef CONFIG_ITRACE
   char *p = s->logbuf;
   p += snprintf(p, sizeof(s->logbuf), FMT_WORD ":", s->pc);
@@ -71,6 +81,7 @@ static void exec_once(Decode *s, vaddr_t pc) {
 
 #ifndef CONFIG_ISA_loongarch32r
   void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
+  printf("logbuf is %s, size of logbuf is %ld, p is %s\n", s->logbuf , sizeof(s->logbuf) , p);
   disassemble(p, s->logbuf + sizeof(s->logbuf) - p,
       MUXDEF(CONFIG_ISA_x86, s->snpc, s->pc), (uint8_t *)&s->isa.inst.val, ilen);
 #else
@@ -83,6 +94,7 @@ static void execute(uint64_t n) {
   Decode s;
   for (;n > 0; n --) {
     exec_once(&s, cpu.pc);
+    //记录客户指令的计数器
     g_nr_guest_inst ++;
     trace_and_difftest(&s, cpu.pc);
     if (nemu_state.state != NEMU_RUNNING) break;
