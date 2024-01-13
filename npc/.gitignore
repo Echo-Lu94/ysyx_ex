@@ -8,3 +8,8 @@
 !*.cpp
 !.gitignore
 !README.md
+<<<<<<< HEAD
+=======
+build/
+*/obj_dir/*
+>>>>>>> master

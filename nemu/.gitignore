@@ -10,6 +10,13 @@
 !Kconfig
 include/config
 include/generated
+<<<<<<< HEAD
 *.o
 */build/*
 LICENSE
+=======
+!scripts/*
+*.o
+/build/*
+*.swp
+>>>>>>> master
