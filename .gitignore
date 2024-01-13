@@ -1,0 +1,13 @@
+*.[oa]
+!*/
+!/nemu/*
+!/npc/*
+!/nexus-am/*
+!/nanos-lite/*
+!/navy-apps/*
+!Makefile
+!README.md
+!.gitignore
+!init.sh
+!/fceux-am
+!/nvboard

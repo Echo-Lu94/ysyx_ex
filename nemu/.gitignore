@@ -1,3 +1,5 @@
+*.*
+*
 !*/
 !Makefile
 !*.mk
@@ -9,8 +11,5 @@
 include/config
 include/generated
 *.o
-build/*
-!scripts/*
-input
+*/build/*
 LICENSE
-
