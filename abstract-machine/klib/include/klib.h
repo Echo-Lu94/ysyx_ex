@@ -9,7 +9,9 @@
 extern "C" {
 #endif
 
-//#define __NATIVE_USE_KLIB__
+//use when in native but not nemu(use native)
+//ARCH=native
+#define __NATIVE_USE_KLIB__
 
 // string.h
 void  *memset    (void *s, int c, size_t n);
