@@ -143,10 +143,25 @@ config TRACE_END
   int "When tracing is disabled (unit: number of instructions)"
   default 10000
 
+config MTRACE
+    depends on TRACE
+    bool "Enable memory tracer"
+    default n
+
+config FTRACE
+    depends on TRACE
+    bool "Enable function tracer"
+    default n
+
 config ITRACE
   depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
   bool "Enable instruction tracer"
   default y
+
+config ITRACE_LOG
+  depends on ITRACE
+  string "Enable print itrace log"
+  default "true"
 
 config ITRACE_COND
   depends on ITRACE

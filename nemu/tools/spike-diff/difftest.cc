@@ -78,7 +78,8 @@ void sim_t::diff_memcpy(reg_t dest, void* src, size_t n) {
 }
 
 extern "C" {
-
+//在DUT host memory 的'buf'和REF guest memory的'addr'之间拷贝n字节
+//direction指定拷贝方向，difftest_do_dut表示往DUT拷贝，difftest_to_ref表示往REF拷贝
 __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction) {
   if (direction == DIFFTEST_TO_REF) {
     s->diff_memcpy(addr, buf, n);
@@ -86,7 +87,8 @@ __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction)
     assert(0);
   }
 }
-
+//direction为difftest_to_dut时，获取REF的寄存器状态到dut，，往dut拷贝
+//direction为difftest_to_ref时，设置REF的寄存器状态为dut，，往ref拷贝
 __EXPORT void difftest_regcpy(void* dut, bool direction) {
   if (direction == DIFFTEST_TO_REF) {
     s->diff_set_regs(dut);
@@ -94,11 +96,11 @@ __EXPORT void difftest_regcpy(void* dut, bool direction) {
     s->diff_get_regs(dut);
   }
 }
-
+//ref执行n条指令
 __EXPORT void difftest_exec(uint64_t n) {
   s->diff_step(n);
 }
-
+//初始化ref的difftest功能
 __EXPORT void difftest_init(int port) {
   difftest_htif_args.push_back("");
   const char *isa = "RV" MUXDEF(CONFIG_RV64, "64", "32") MUXDEF(CONFIG_RVE, "E", "I") "MAFDC";

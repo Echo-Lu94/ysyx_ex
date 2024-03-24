@@ -17,7 +17,7 @@
 #define __UTILS_H__
 
 #include <common.h>
-
+//#include <cpu/decode.h>
 // ----------- state -----------
 
 enum { NEMU_RUNNING, NEMU_STOP, NEMU_END, NEMU_ABORT, NEMU_QUIT };
@@ -72,6 +72,29 @@ uint64_t get_time();
     printf(__VA_ARGS__); \
     log_write(__VA_ARGS__); \
   } while (0)
+
+//--------------- iringbuf -------------------
+typedef struct IRBuffer{
+    int rd_ptr;
+    int wr_ptr;
+    char **buffer;
+}IRBuffer;
+
+//extern IRBuffer *irbuf;
+IRBuffer* IRBuffer_create();
+void IRBuffer_free(IRBuffer* irbuf);
+void IRBuffer_wr(IRBuffer* irbuf, char* itrace);
+void IRBuffer_display(IRBuffer* irbuf);
+#define IRBUFFER_SIZE 16
+#define ITRACE_LEN    128
+
+// ----------------- ftrace --------------------
+//struct Decode;
+//void func_detect(Decode* s);
+void init_elf(const char* elf_file);
+void func_detect(vaddr_t dnpc, vaddr_t pc);
+extern int func_state;
+enum { CALL = 1, RET};
 
 
 #endif
