@@ -17,6 +17,7 @@
 #include <cpu/decode.h>
 #include <cpu/difftest.h>
 #include <locale.h>
+#include <utils.h>
 
 /* The assembly code of instructions executed is only output to the screen
  * when the number of instructions executed is less than this value.
@@ -30,13 +31,19 @@ uint64_t g_nr_guest_inst = 0;
 static uint64_t g_timer = 0; // unit: us
 static bool g_print_step = false;
 void device_update();
+IRBuffer* irbuf;
 
 ////////////////////watchpoint//////////////////////
 void diff_wp();
 
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 #ifdef CONFIG_ITRACE_COND
-  if (ITRACE_COND) { log_write("%s\n", _this->logbuf); }
+  if (ITRACE_COND) { 
+      log_write("%s\n", _this->logbuf);
+      IRBuffer_wr(irbuf, _this->logbuf);
+//      func_detect(_this);
+  }
+
 #endif
   ///////////////////// print si instruction, by halo
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
@@ -58,23 +65,40 @@ diff_wp();
 
 static void exec_once(Decode *s, vaddr_t pc) {
 
-  s->pc = pc;
+  s->pc = pc;//current pc
   s->snpc = pc;//static next pc
+
   isa_exec_once(s);
+ //执行后s->pc实际上是s->dnpc //已修改,s->pc=pc
+
+#ifdef CONFIG_ITRACE_LOG
  Log("cpu.pc: %08x",pc);
+ Log("s->pc: %08x",s->pc);//s->dnpc
  Log("dnpc: %08x", s->dnpc);
+ Log("snpc: %08x", s->snpc);
+// Log("logbuf: %s",s->logbuf);
+#endif
 
-  cpu.pc = s->dnpc;
-
+#ifdef CONFIG_FTRACE
+ func_detect(s->dnpc, pc);
+#endif
+ cpu.pc = s->dnpc;
+ 
 #ifdef CONFIG_ITRACE
   char *p = s->logbuf;
+//  int tmp;
+//  char iringbuf_inst[32];
 //pc地址保存在p中
-  p += snprintf(p, sizeof(s->logbuf), FMT_WORD ":", s->pc);
-//  snprintf(p, sizeof(s->logbuf), FMT_WORD ":", s->pc);
-//  Log("p2: %s", p);
-//  int ilen = s->snpc - s->pc;
-  int ilen = s->dnpc - s->pc;
-//  Log("ilen: %d",ilen);
+//snprintf() 函数的返回值是输出到 str 缓冲区中的字符数，不包括字符串结尾的空字符 \0【实际打印输(11)出来看，是包含的？？？？？？？？？？？】
+  p += snprintf(p, sizeof(s->logbuf), FMT_WORD ":", pc);
+//  strcpy(iringbuf_inst,p);
+//  snprintf(p, sizeof(s->logbuf), FMT_WORD ":", pc);
+//  Log("p2: %s", p);//当前pc地址
+  int ilen = s->dnpc - pc;
+//  int ilen =4;
+  int ilen_max = MUXDEF(CONFIG_ISA_x86, 8, 4);
+  if((ilen > ilen_max) || (ilen < 0)) ilen = 4;
+//  printf("ilen: %d\n",ilen);
   int i;
   uint8_t *inst = (uint8_t *)&s->isa.inst.val;
   //实际指令保存到p中
@@ -83,21 +107,28 @@ static void exec_once(Decode *s, vaddr_t pc) {
 //    snprintf(p, 4, " %02x", inst[i]);
 //    Log("p3: %s", p);
   }
-  int ilen_max = MUXDEF(CONFIG_ISA_x86, 8, 4);
+
+//  sprintf(iringbuf_inst,"%08x ",s->isa.inst.val);
+//  printf("iringbuf:%s\n",iringbuf_inst);
+
   int space_len = ilen_max - ilen;
 //  Log("space len: %d",space_len);
   if (space_len < 0) space_len = 0;
   space_len = space_len * 3 + 1;
   memset(p, ' ', space_len);
-  //反汇编指令保存到p中
   p += space_len;
-
+//   Log("p3: %s", p);
 #ifndef CONFIG_ISA_loongarch32r
 //当前反汇编指令
+//反汇编指令保存到p中
   void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
   disassemble(p, s->logbuf + sizeof(s->logbuf) - p,
-      MUXDEF(CONFIG_ISA_x86, s->snpc, s->pc), (uint8_t *)&s->isa.inst.val, ilen);
-  printf("inst: %s\n",s->logbuf);
+      MUXDEF(CONFIG_ISA_x86, s->snpc, pc), (uint8_t *)&s->isa.inst.val, ilen);
+//  Log("p4: %s", p);//当前pc地址
+//  strcpy(iringbuf[0], p);
+//  strcat(iringbuf_inst,p);
+//  printf("iringbuf:%s\n",*iringbuf_inst);
+
 #else
   p[0] = '\0'; // the upstream llvm does not support loongarch32r
 #endif
@@ -106,15 +137,24 @@ static void exec_once(Decode *s, vaddr_t pc) {
 
 static void execute(uint64_t n) {
   Decode s;
-//  s.pc = cpu.pc;
+  irbuf=IRBuffer_create();
+  int cnt=0;
   for (;n > 0; n --) {
+      cnt++;
     exec_once(&s, cpu.pc);
     //记录客户指令的计数器
     g_nr_guest_inst ++;
     trace_and_difftest(&s, cpu.pc);
+//    printf("buffer:%s\n",*irbuf->buffer);
     if (nemu_state.state != NEMU_RUNNING) break;
     IFDEF(CONFIG_DEVICE, device_update());
+
   }
+    if(nemu_state.state == NEMU_ABORT || (nemu_state.state == NEMU_END && nemu_state.halt_ret != 0)){
+        if(cnt < IRBUFFER_SIZE) irbuf->rd_ptr = 0;
+        else irbuf->rd_ptr = irbuf->wr_ptr;
+        IRBuffer_display(irbuf);
+    }
 }
 
 static void statistic() {
@@ -165,4 +205,5 @@ void cpu_exec(uint64_t n) {
       // fall through
     case NEMU_QUIT: statistic();
   }
+  IRBuffer_free(irbuf);
 }

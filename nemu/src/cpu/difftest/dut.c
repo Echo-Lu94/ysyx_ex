@@ -63,9 +63,11 @@ void init_difftest(char *ref_so_file, long img_size, int port) {
   assert(ref_so_file != NULL);
 
   void *handle;
+//打开传入的动态文件ref_so_file
   handle = dlopen(ref_so_file, RTLD_LAZY);
   assert(handle);
 
+//通过动态链接对动态库中的API符号进行解析和重定位，并返回地址
   ref_difftest_memcpy = dlsym(handle, "difftest_memcpy");
   assert(ref_difftest_memcpy);
 
@@ -86,8 +88,11 @@ void init_difftest(char *ref_so_file, long img_size, int port) {
       "This will help you a lot for debugging, but also significantly reduce the performance. "
       "If it is not necessary, you can turn it off in menuconfig.", ref_so_file);
 
+//对REF的difftest功能进行初始化，具体行为因ref而异
   ref_difftest_init(port);
+//将DUT的guest memory拷贝到REF中
   ref_difftest_memcpy(RESET_VECTOR, guest_to_host(RESET_VECTOR), img_size, DIFFTEST_TO_REF);
+//将DUT的寄存器状态拷贝到REF中
   ref_difftest_regcpy(&cpu, DIFFTEST_TO_REF);
 }
 
@@ -100,7 +105,7 @@ static void checkregs(CPU_state *ref, vaddr_t pc) {
 }
 
 void difftest_step(vaddr_t pc, vaddr_t npc) {
-  CPU_state ref_r;
+  CPU_state ref_r;//CPU_state cpu{pc, gpr[32]}
 
   if (skip_dut_nr_inst > 0) {
     ref_difftest_regcpy(&ref_r, DIFFTEST_TO_DUT);
