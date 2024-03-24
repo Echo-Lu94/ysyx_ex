@@ -86,6 +86,8 @@ CC        = $(CROSS_COMPILE)gcc
 CXX       = $(CROSS_COMPILE)g++
 LD        = $(CROSS_COMPILE)ld
 AR        = $(CROSS_COMPILE)ar
+#objdump查看目标文件或者可执行文件的构成
+#-d 反汇编特定指令机器码的section
 OBJDUMP   = $(CROSS_COMPILE)objdump
 OBJCOPY   = $(CROSS_COMPILE)objcopy
 READELF   = $(CROSS_COMPILE)readelf

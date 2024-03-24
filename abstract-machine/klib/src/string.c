@@ -8,7 +8,7 @@
 //不含\0
 size_t strlen(const char *s) {
     int n = 0;
-    assert(s != NULL);
+//    assert(s != NULL);
 //    while(s[n] != '\0'){
     while(*s != '\0'){
         n++;
