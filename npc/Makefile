@@ -1,79 +1,120 @@
-#电路名xxx.v，testbench名tb_xxx.cpp，使用make MODULE='xxx' '执行模式‘进行自动化仿真
-#执行模式
-#1. sim: 执行仿真流程，并生成波形文件
-#2. build: 生成仿真所需文件和波形文件
-#3. wave: 查看波形文件
-#4. module_verilate: 仅生成电路模块的C++文件
-#5. testbench_verilate: 生成电路模块和testbench的C++文件
-
 TOP=npc
-NXDC_FILES = 
-INC_PATH ?= ./include/ 
-MODULE=npc
+TEST_NAME=dummy
+#INC_PATH ?= ./include/ 
 DEFINE=
-VERILATOR_CFLAGS += -Wall -MMD --build -cc  \
-				-O3 --x-assign fast --x-initial fast --noassert
+BUILD_DIR=$(NPC_HOME)/build
 
-VERILATOR_FLAGS += -sv -cc +verilog2001ext+ --x-assign fast --x-initial fast --noassert
+OBJ_DIR = $(BUILD_DIR)
+BINARY = $(BUILD_DIR)
+#------------------------------------------------------------
+#                    verilator flags
+#------------------------------------------------------------
+#Generate C++ in executable form
+VERILATOR_FLAGS += -cc --exe
+#Create .d dependencies
+VERILATOR_FLAGS += -MMD -MP
+#Optimize,assign non-initial Xs to this value
+VERILATOR_FLAGS += --x-assign fast --x-initial fast
+#Enable all styles warnings
+#VERILATOR_FLAGS += -Wall 
+#Enable all assertions
+VERILATOR_FLAGS += --assert 
+# Generate coverage analysis
+# VERILATOR_FLAGS += --coverage
+# Run Verilator in debug mode
+#VERILATOR_FLAGS += --debug
+# Add this trace to get a backtrace in gdb
+#VERILATOR_FLAGS += --gdbbt
+#VERILATOR_FLAGS += --top-module top +incdir+vsrc/include
+VERILATOR_FLAGS += --build -Mdir $(BUILD_DIR)
+
+#--------------------------------------------------
+#                     SRCS
+#--------------------------------------------------
 #project source
-VSRCS = $(shell find $(abspath ./) -name "*.v")
-CSRCS = $(shell find $(abspath ./) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
-CSRCS += $(SRC_AUTO_BIND)
+VSRCS = $(shell find $(abspath ./vsrc) -name "*.v")
+CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
+#CSRCS = $(shell find -name "*.c" -or -name "*.cpp")
 
-
+INC_VPATH += $(NPC_HOME)/vsrc/include/
+INC_CPATH := $(NPC_HOME)/csrc/include/ $(INC_CPATH)
 #rules for verilator
-INCFLAGS = $(addprefix -I, $(INC_PATH))
-#INCFLAGS = -I
-CFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOP)\""
-LDFLAGS += -lSDL2 -lSDL2_image
+VINCLUDES = $(addprefix -I, $(INC_VPATH))
+CINCLUDES = $(addprefix -I, $(INC_CPATH))
+
+-include $(NPC_HOME)/csrc/include/config/auto.conf
+-include $(NPC_HOME)/csrc/include/config/auto.conf.cmd
+
+#CFLAGS += -CFLAGS -DTOP_NAME="\"V$(TOP)\"" "${CINCLUDES}"
+CFLAGS += ${CINCLUDES} -D__GUEST_ISA__="risc32"
+LDFLAGS += $(if $(CONFIG_TARGET_NATIVE_ELF), -lreadline -ldl -pie,)
+
+ifneq ($(CONFIG_ITRACE)$(CONFIG_IQUEUE),)
+CXXSRC = csrc/utils/disasm.cc
+#$(info "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+#LIBS += $(shell llvm-config --libs) 
+#CXXFLAGS += $(shell llvm-config --cxxflags) -fPIE
+LDFLAGS += $(shell llvm-config --libs) 
+LDFLAGS += $(shell llvm-config --cxxflags) -fPIE
+#LDFLAGS += -L.
+endif
+
+#OBJS = $(CSRCS:%.c=$(OBJ_DIR)/%.o) $(CXXSRC:%.cc=$(OBJ_DIR)/%.o)
+#OBJS = $(CXXSRC:%.cc=$(BUILD_DIR)/%.o)
+#$(info "@@@@@@@@@@$(OBJS)")
+
 #CFLAGS += -D$(DEFINE)
+IMAGE ?= $(YSYX_HOME)/am-kernels/tests/cpu-tests/build/$(TEST_NAME)-riscv32e-npc.bin
+NPC_ARGS :=  -l ${BUILD_DIR}/npc-log.txt
+NPC_ARGS += -b
+NPC_ARGS += -e $(shell dirname $(IMAGE).elf)/$(TEST_NAME)-riscv32e-npc.elf
+#NPC_ARGS +=--log ./run.log --diff=$(NEMU_HOME)/build/riscv32e-nemu-interpreter-so
 
+#useless, need function main()
+#comrtl:clean
+#	@echo "#------------------------------------"
+#	@echo "#        MODULE VERILATING           "
+#	@echo "#------------------------------------"
+#	verilator ${VERILATOR_FLAGS} -I${INC_VPATH} ${VSRCS} -top ${TOP}
 
-#default:
-#ifndef TOP
-#	@echo "Set TOP name"
-#else
-#	@echo "Select the execution mode: sim, build, wave, module_verilate, testbench_verilate"
-#endif
+#$(OBJ_DIR)/%.o: %.c
+#	@echo + CC $<
+#	@mkdir -p $(dir $@)
+#	@gcc $(CFLAGS) -c -o $@ $<
+#	$(call call_fixdep, $(@:.o=.d), $@)
 #
-#.PHONY: sim
-sim:waveform.vcd
+#$(OBJ_DIR)/%.o: %.cc
+#	@echo + CXX $<
+#	@mkdir -p $(dir $@)
+#	@g++ $(CFLAGS) $(CXXFLAGS) -c -o $@ $<
+#	$(call call_fixdep, $(@:.o=.d), $@)
 #
-#.PHONY: build
-build: ./obj_dir/V${MODULE}
-#
-#.PHONY: module_verilate
-module_verilate: .module.verilate
-#
-#.PHONY: testbench_verilate
-testbench_verilate: .testbench.verilate
-#
-#.PHONY: wave
-wave: waveform.vcd
-	@echo "### SIMULATING ###"
+#$(BINARY): $(OBJS) 
+#	@echo + LD $@
+#	@g++ -o $@ $(OBJS) $(LDFLAGS) $(LIBS)
+
+#$(info "!!!!!!!!!!!!!!!$(CFLAGS)")
+comtb:clean 
+	@echo "#------------------------------------"
+	@echo "#     TESTBENCH VERILATING           "
+	@echo "#------------------------------------" 
+#	@mkdir -p $(dir $(BUILD_DIR)/%.c)
+#	g++ ${CFLAGS}  ${CXXFLAGS} $(LIBS) -c -o $(BUILD_DIR)/disasm.o $(CXXSRC)
+#	$(call call_fixdep, $(@:.o=.d), $(BUILD_DIR)/disasm.o)
+	verilator --trace  ${VERILATOR_FLAGS} ${VINCLUDES} ${VSRCS} -top ${TOP} \
+		$(addprefix -CFLAGS , ${CFLAGS}) $(addprefix -LDFLAGS , ${LDFLAGS}) \
+		${CSRCS} 
+
+sim:comtb
+	@echo "#------------------------------------"
+	@echo "#        	BUILDING SIM            "
+	@echo "#------------------------------------"
+	$(BUILD_DIR)/V$(TOP) $(NPC_ARGS) $(IMAGE)
+
+wave:
 	gtkwave waveform.vcd
-#
-waveform.vcd: ./obj_dir/V${MODULE}
-	@echo "### WAVE ###"
-	./obj_dir/V${MODULE} | tee sim.log
-#
-##生成仿真可执行文件“
-./obj_dir/V${MODULE}: .testbench.verilate
-	@echo "### BUILDING SIM ###"
-	make -C obj_dir -f V${MODULE}.mk V${MODULE}
-#
-#.testbench.verilate: ${MODULE}.v tb_${MODULE}.cpp
-.testbench.verilate: ${VSRCS} ${CSRCS}
-	@echo "### TESTBENCH VERILATING ###"
-	verilator --trace ${VERILATOR_FLAGS} -I${INC_PATH} ${VSRCS} -top ${TOP} --exe ${CSRCS}
-#
-.module.verilate: ${VSRCS}
-	@echo "### MODULE VERILATING ###"
-	verilator ${VERILATOR_FLAGS} -I${INC_PATH} ${VSRCS} -top ${TOP}
-#
-.PHONY: clean
+
 clean:
-	rm -rf $(BUILD_DIR)
-	rm -rf waveform.vcd
-	rm -rf ./obj_dir
-.PHONY: default all clean run
+	rm -rf $(BUILD_DIR) ./waveform.vcd
+
+

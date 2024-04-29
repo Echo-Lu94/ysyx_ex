@@ -95,12 +95,14 @@ static void exec_once(Decode *s, vaddr_t pc) {
 //  snprintf(p, sizeof(s->logbuf), FMT_WORD ":", pc);
 //  Log("p2: %s", p);//当前pc地址
   int ilen = s->dnpc - pc;
+//  Log("ilen:%d",ilen);
 //  int ilen =4;
   int ilen_max = MUXDEF(CONFIG_ISA_x86, 8, 4);
   if((ilen > ilen_max) || (ilen < 0)) ilen = 4;
 //  printf("ilen: %d\n",ilen);
   int i;
   uint8_t *inst = (uint8_t *)&s->isa.inst.val;
+//  Log("inst: %s",inst);
   //实际指令保存到p中
   for (i = ilen - 1; i >= 0; i --) {
     p += snprintf(p, 4, " %02x", inst[i]);
@@ -124,7 +126,8 @@ static void exec_once(Decode *s, vaddr_t pc) {
   void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
   disassemble(p, s->logbuf + sizeof(s->logbuf) - p,
       MUXDEF(CONFIG_ISA_x86, s->snpc, pc), (uint8_t *)&s->isa.inst.val, ilen);
-//  Log("p4: %s", p);//当前pc地址
+//  Log("p4: %s", p);//反汇编
+//Log("logbuf2: %s", s->logbuf);
 //  strcpy(iringbuf[0], p);
 //  strcat(iringbuf_inst,p);
 //  printf("iringbuf:%s\n",*iringbuf_inst);

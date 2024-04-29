@@ -15,6 +15,7 @@ NEMUFLAGS += -l $(shell dirname $(IMAGE).elf)/nemu-log.txt
 #changed for sdb_set_batch_mode()
 NEMUFLAGS += -b 
 NEMUFLAGS += -e $(shell dirname $(IMAGE).elf)/$(NAME)-$(ARCH).elf
+#$(info "!!!!!!!!!!!!!!!! $(NEMUFLAGS)")
 
 CFLAGS += -DMAINARGS=\"$(mainargs)\"
 CFLAGS += -I$(AM_HOME)/am/src/platform/nemu/include
@@ -25,6 +26,7 @@ image: $(IMAGE).elf
 	@echo + OBJCOPY "->" $(IMAGE_REL).bin
 	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O binary $(IMAGE).elf $(IMAGE).bin
 
+#make -C表示跳转到目录下执行Makefile
 run: image
 	$(MAKE) -C $(NEMU_HOME) ISA=$(ISA) run ARGS="$(NEMUFLAGS)" IMG=$(IMAGE).bin
 
