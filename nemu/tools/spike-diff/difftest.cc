@@ -79,7 +79,7 @@ void sim_t::diff_memcpy(reg_t dest, void* src, size_t n) {
 
 extern "C" {
 //在DUT host memory 的'buf'和REF guest memory的'addr'之间拷贝n字节
-//direction指定拷贝方向，difftest_do_dut表示往DUT拷贝，difftest_to_ref表示往REF拷贝
+//direction指定拷贝方向，difftest_to_dut表示往DUT拷贝，difftest_to_ref表示往REF拷贝
 __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction) {
   if (direction == DIFFTEST_TO_REF) {
     s->diff_memcpy(addr, buf, n);

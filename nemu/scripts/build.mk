@@ -6,6 +6,7 @@ SO = -so
 CFLAGS  += -fPIC -fvisibility=hidden
 LDFLAGS += -shared -fPIC
 endif
+#$(info "###########$(SHARE))=0
 
 WORK_DIR  = $(shell pwd)
 BUILD_DIR = $(WORK_DIR)/build
@@ -13,6 +14,7 @@ BUILD_DIR = $(WORK_DIR)/build
 INC_PATH := $(WORK_DIR)/include $(INC_PATH)
 OBJ_DIR  = $(BUILD_DIR)/obj-$(NAME)$(SO)
 BINARY   = $(BUILD_DIR)/$(NAME)$(SO)
+#$(info "!!!!!!!!!!!$(BINARY))
 
 # Compilation flags
 ifeq ($(CC),clang)
@@ -25,6 +27,7 @@ INCLUDES = $(addprefix -I, $(INC_PATH))
 CFLAGS  := -O2 -MMD -Wall -Werror $(INCLUDES) $(CFLAGS)
 LDFLAGS := -O2 $(LDFLAGS)
 
+#将SRC变量中所有.c结尾的文件名替换为对应.o结尾的文件名，然后赋给SRC
 OBJS = $(SRCS:%.c=$(OBJ_DIR)/%.o) $(CXXSRC:%.cc=$(OBJ_DIR)/%.o)
 
 # Compilation patterns
@@ -52,6 +55,8 @@ app: $(BINARY)
 $(BINARY): $(OBJS) $(ARCHIVES)
 	@echo + LD $@
 	@$(LD) -o $@ $(OBJS) $(LDFLAGS) $(ARCHIVES) $(LIBS)
+
+#$(info "!!!!!!!!!!!!!!!!!$(LD) -o $(OBJS) $(LDFLAGS) $(ARCHIVES) $(LIBS)")
 
 clean:
 	-rm -rf $(BUILD_DIR)
