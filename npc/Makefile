@@ -1,9 +1,13 @@
 TOP=npc
-TEST_NAME=dummy
+#TEST_NAME=dummy
 #INC_PATH ?= ./include/ 
 DEFINE=
 BUILD_DIR=$(NPC_HOME)/build
+#ALL ?= dummy
 
+TEST_HOME=$(YSYX_HOME)/am-kernels/tests/cpu-tests/
+ALLS = $(basename $(notdir $(shell find $(TEST_HOME)tests/. -name "*.c")))
+#$(info "$ALL")
 OBJ_DIR = $(BUILD_DIR)
 BINARY = $(BUILD_DIR)
 #------------------------------------------------------------
@@ -18,7 +22,9 @@ VERILATOR_FLAGS += --x-assign fast --x-initial fast
 #Enable all styles warnings
 #VERILATOR_FLAGS += -Wall 
 #Enable all assertions
-VERILATOR_FLAGS += --assert 
+VERILATOR_FLAGS += --assert
+VERILATOR_FLAGS += --public
+VERILATOR_FLAGS += --timing
 # Generate coverage analysis
 # VERILATOR_FLAGS += --coverage
 # Run Verilator in debug mode
@@ -47,7 +53,28 @@ CINCLUDES = $(addprefix -I, $(INC_CPATH))
 
 #CFLAGS += -CFLAGS -DTOP_NAME="\"V$(TOP)\"" "${CINCLUDES}"
 CFLAGS += ${CINCLUDES} -D__GUEST_ISA__="risc32"
+CPPFLAGS += -O2 -MMD -Wall -Werror 
 LDFLAGS += $(if $(CONFIG_TARGET_NATIVE_ELF), -lreadline -ldl -pie,)
+CFLAGS += $(if $(CONFIG_CC_ASAN), -fsanitize=address,)
+
+#------------------------------------------------
+#                   DIFFTEST
+#------------------------------------------------
+ifdef CONFIG_DIFFTEST
+DIFF_REF_PATH = $(NEMU_HOME)/$(call remove_quote,$(CONFIG_DIFFTEST_REF_PATH))
+#DIFF_REF_SO = $(DIFF_REF_PATH)/build/$(call remove_quote,$(CONFIG_ISA))-$(call remove_quote,$(CONFIG_DIFFTEST_REF_NAME))-$(call remove_quote,$(CONFIG_ENGINE))-so
+DIFF_REF_SO = $(DIFF_REF_PATH)/build/riscv32-nemu-interpreter-so
+#SHARE=$(if $(CONFIG_TARGET_SHARE),1,0)
+#$(info "````````````$(call remove_quote,$(CONFIG_ISA))``````$(DIFF_REF_SO)")
+NPC_ARGS = --diff=$(DIFF_REF_SO)
+#ifeq ($(SHARE),1)
+#$(info "``````````")
+##SO = -so
+#CFLAGS  += -fPIC -fvisibility=hidden
+#LDFLAGS += -shared -fPIC
+#endif
+endif
+
 
 ifneq ($(CONFIG_ITRACE)$(CONFIG_IQUEUE),)
 CXXSRC = csrc/utils/disasm.cc
@@ -64,11 +91,11 @@ endif
 #$(info "@@@@@@@@@@$(OBJS)")
 
 #CFLAGS += -D$(DEFINE)
-IMAGE ?= $(YSYX_HOME)/am-kernels/tests/cpu-tests/build/$(TEST_NAME)-riscv32e-npc.bin
-NPC_ARGS :=  -l ${BUILD_DIR}/npc-log.txt
+IMAGE ?= $(YSYX_HOME)/am-kernels/tests/cpu-tests/build/$(ALL)-riscv32e-npc.bin
+NPC_ARGS +=  -l ${BUILD_DIR}/npc-log.txt
 NPC_ARGS += -b
-NPC_ARGS += -e $(shell dirname $(IMAGE).elf)/$(TEST_NAME)-riscv32e-npc.elf
-#NPC_ARGS +=--log ./run.log --diff=$(NEMU_HOME)/build/riscv32e-nemu-interpreter-so
+NPC_ARGS += -e $(shell dirname $(IMAGE).elf)/$(ALL)-riscv32e-npc.elf
+NPC_ARGS +=--log ${BUILD_DIR}/run.log 
 
 #useless, need function main()
 #comrtl:clean
@@ -76,22 +103,6 @@ NPC_ARGS += -e $(shell dirname $(IMAGE).elf)/$(TEST_NAME)-riscv32e-npc.elf
 #	@echo "#        MODULE VERILATING           "
 #	@echo "#------------------------------------"
 #	verilator ${VERILATOR_FLAGS} -I${INC_VPATH} ${VSRCS} -top ${TOP}
-
-#$(OBJ_DIR)/%.o: %.c
-#	@echo + CC $<
-#	@mkdir -p $(dir $@)
-#	@gcc $(CFLAGS) -c -o $@ $<
-#	$(call call_fixdep, $(@:.o=.d), $@)
-#
-#$(OBJ_DIR)/%.o: %.cc
-#	@echo + CXX $<
-#	@mkdir -p $(dir $@)
-#	@g++ $(CFLAGS) $(CXXFLAGS) -c -o $@ $<
-#	$(call call_fixdep, $(@:.o=.d), $@)
-#
-#$(BINARY): $(OBJS) 
-#	@echo + LD $@
-#	@g++ -o $@ $(OBJS) $(LDFLAGS) $(LIBS)
 
 #$(info "!!!!!!!!!!!!!!!$(CFLAGS)")
 comtb:clean 
@@ -105,16 +116,40 @@ comtb:clean
 		$(addprefix -CFLAGS , ${CFLAGS}) $(addprefix -LDFLAGS , ${LDFLAGS}) \
 		${CSRCS} 
 
-sim:comtb
+sim:comtb $(DIFF_REF_SO)
 	@echo "#------------------------------------"
 	@echo "#        	BUILDING SIM            "
 	@echo "#------------------------------------"
 	$(BUILD_DIR)/V$(TOP) $(NPC_ARGS) $(IMAGE)
+	@mv ./waveform.vcd ./build
 
 wave:
-	gtkwave waveform.vcd
+	gtkwave ./build/waveform.vcd
 
 clean:
 	rm -rf $(BUILD_DIR) ./waveform.vcd
 
+#all:run
+#	@echo "" $(ALL)
 
+run: 
+	@$(foreach i, $(ALLS), \
+		make sim ALL=$i; \
+	)
+#	grep -n 'npc:' > .result 
+
+#run: 
+#	@$(foreach i, $(ALLS), \
+#		@if make sim ALL=$i; then \
+#			printf "[%14s] $(COLOR_GREEN)PASS!$(COLOR_NONE)\n" $* >> .result; \
+#		else \
+#			printf "[%14s] $(COLOR_RED)FAIL!$(COLOR_NONE)\n" $* >> .result; \
+#		fi)
+#	@echo "" $(ALL)
+
+all:run
+	@cat .result
+
+#	@for i in $(ALLS); do \
+#		make sim ALL=$$i; \ 
+#	done
