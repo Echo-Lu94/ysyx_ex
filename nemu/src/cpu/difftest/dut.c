@@ -60,6 +60,7 @@ void difftest_skip_dut(int nr_ref, int nr_dut) {
 }
 
 void init_difftest(char *ref_so_file, long img_size, int port) {
+//    printf(",,,,,,,,,,init ,,,,,,,,,,,,,,\n");
   assert(ref_so_file != NULL);
 
   void *handle;
@@ -97,6 +98,9 @@ void init_difftest(char *ref_so_file, long img_size, int port) {
 }
 
 static void checkregs(CPU_state *ref, vaddr_t pc) {
+//    printf("checkregs_101: ref: %08x\n", ref->pc);
+//    printf("checkregs_101: dut: %08x\n", pc);
+//    printf("---------check regs--------\n");
   if (!isa_difftest_checkregs(ref, pc)) {
     nemu_state.state = NEMU_ABORT;
     nemu_state.halt_pc = pc;
@@ -105,6 +109,7 @@ static void checkregs(CPU_state *ref, vaddr_t pc) {
 }
 
 void difftest_step(vaddr_t pc, vaddr_t npc) {
+//    printf(".......step .......\n");
   CPU_state ref_r;//CPU_state cpu{pc, gpr[32]}
 
   if (skip_dut_nr_inst > 0) {

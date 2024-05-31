@@ -1,12 +1,13 @@
 .DEFAULT_GOAL = app
 
 # Add necessary options if the target is a shared library
+# for difftest nemu as ref
 ifeq ($(SHARE),1)
 SO = -so
 CFLAGS  += -fPIC -fvisibility=hidden
 LDFLAGS += -shared -fPIC
 endif
-#$(info "###########$(SHARE))=0
+#$(info "###########$(SHARE))
 
 WORK_DIR  = $(shell pwd)
 BUILD_DIR = $(WORK_DIR)/build
@@ -56,7 +57,8 @@ $(BINARY): $(OBJS) $(ARCHIVES)
 	@echo + LD $@
 	@$(LD) -o $@ $(OBJS) $(LDFLAGS) $(ARCHIVES) $(LIBS)
 
-#$(info "!!!!!!!!!!!!!!!!!$(LD) -o $(OBJS) $(LDFLAGS) $(ARCHIVES) $(LIBS)")
+
+$(info "!!!!!!!build.mk.BINARY!!!!!!!!!!$(BINARY)")
 
 clean:
 	-rm -rf $(BUILD_DIR)

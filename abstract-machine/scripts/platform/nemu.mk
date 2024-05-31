@@ -15,6 +15,7 @@ NEMUFLAGS += -l $(shell dirname $(IMAGE).elf)/nemu-log.txt
 #changed for sdb_set_batch_mode()
 NEMUFLAGS += -b 
 NEMUFLAGS += -e $(shell dirname $(IMAGE).elf)/$(NAME)-$(ARCH).elf
+#NEMUFLAGS += -d 
 #$(info "!!!!!!!!!!!!!!!! $(NEMUFLAGS)")
 
 CFLAGS += -DMAINARGS=\"$(mainargs)\"

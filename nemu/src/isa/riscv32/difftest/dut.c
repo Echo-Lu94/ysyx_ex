@@ -19,11 +19,16 @@
 
 bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc) {
 //cpu.pc== s->dnpc in exec_once
-//    printf("cpu.pc=%x, pc=%x, ref_pc=%x\n",cpu.pc,pc,ref_r->pc);
+    printf("cpu.pc=%x, pc=%x, ref_pc=%x\n",cpu.pc,pc,ref_r->pc);
   if(cpu.pc == ref_r->pc){
       for(int i=0;i<NR_GPR;){
-          if(ref_r->gpr[i] == cpu.gpr[i]) 
-          i++;
+          if(ref_r->gpr[i] == cpu.gpr[i]){ 
+            i++;
+          }
+          else{
+            return difftest_check_reg(reg_name(i), pc, ref_r->gpr[i], cpu.gpr[i]);
+          }
+
       }
       return true;
   }else return false;
